@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0" /> -->
+    <title>Covid-19 Chart</title>
+
+    <link
+      rel="stylesheet"
+      href="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/css/font-awesome.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/css/daterangepicker.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/css/style.css"
+    />
+    <script src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/jquery.min.js"></script>
+    <script src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/bootstrap.min.js"></script>
+    <script
+      type="text/javascript"
+      src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/moment.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/daterangepicker.min.js"
+    ></script>
+    <link rel="stylesheet" href="stylesheet.css" />
+  </head>
+  <body>
+    <div id="app" class="d-flex flex-column">
+      <div class="card border py-2 w-100 h-100 mb-4">
+        <div class="card-body">
+          <div id="chartNetwork"></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-6">
+          <div class="card border py-2 mb-2">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">Cấp lây nhiễm</h5>
+                <div
+                  class="d-flex align-items-center justify-content-around col"
+                  style="font-size: 0.85rem;"
+                >
+                  <div class="text-small text-nguon"><span class="badge badge-nguon">Nguồn lây</span> Nguồn lây</div>
+                  <div class="text-small text-f0"><span class="badge badge-f0">F0</span> F0</div>
+                  <div class="text-small text-f1"><span class="badge badge-f1">F1</span> F1</div>
+                  <div class="text-small text-f2"><span class="badge badge-f2">F2</span> F2</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="card border py-2 mb-2">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">Mức nguy cơ</h5>
+                <div
+                  class="d-flex align-items-center justify-content-around col"
+                  style="font-size: 0.85rem;"
+                >
+                  <div class="text-small text-secondary"><span class="badge badge-thap">Thấp</span> Thấp</div>
+                  <div class="text-small text-secondary"><span class="badge badge-trungbinh">Trung bình</span> Trung bình</div>
+                  <div class="text-small text-secondary"><span class="badge badge-cao">Cao</span> Cao</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/core.js"></script>
+    <script src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/maps.js"></script>
+    <script src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/charts.js"></script>
+    <script src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/vietnamLow.js"></script>
+    <script src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/forceDirected.js"></script>
+    <script src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/animated.js"></script>
+    <script src="https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/js/bullets.js"></script>
+    <script>
+      async function genNetworkChart() {
+        am4core.useTheme(am4themes_animated);
+
+        var chart = am4core.create(
+          "chartNetwork",
+          am4plugins_forceDirected.ForceDirectedTree
+        );
+
+        var networkSeries = chart.series.push(
+          new am4plugins_forceDirected.ForceDirectedSeries()
+        );
+        networkSeries.dataFields.value = "value";
+        networkSeries.dataFields.linkWith = "linkWith";
+        networkSeries.dataFields.name = "name";
+        networkSeries.dataFields.children = "children";
+        networkSeries.dataFields.color = "color";
+        networkSeries.dataFields.age = "Tuổi";
+        networkSeries.dataFields.national = "Quốc Tịch";
+        networkSeries.dataFields.sex = "Giới Tính";
+        networkSeries.dataFields.datein = "Ngày Nhập";
+        networkSeries.dataFields.dateout = "Ngày Xuất";
+        networkSeries.dataFields.tinh = "Tỉnh";
+        networkSeries.dataFields.cachlay = "Cách Lây";
+        networkSeries.dataFields.code = "code";
+        networkSeries.dataFields.icon = "icon";
+        networkSeries.dataFields.diem = "Điểm";
+        networkSeries.dataFields.maudiem = "maudiem";
+        networkSeries.tooltip.getFillFromObject = false;
+        networkSeries.tooltip.background.fill = am4core.color("#4e73df");
+
+        networkSeries.nodes.template.adapter.add("tooltipHTML", function (
+          text,
+          target
+        ) {
+          if (target.dataItem) {
+            switch (target.dataItem.level) {
+              case 0:
+                return "<span style='font-size:15px'>Về từ {name}</span>";
+
+              default:
+                return `
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: row;
+                      justify-content: center;
+                      align-items: center;
+                      font-size: 15px;
+                    "
+                  >
+                    <img src="{icon}" alt="Smiley face" height="62" width="62" />
+                    <table style="margin-left: 20px;">
+                      <tr>
+                        <th align="left" style="padding: 0 8px 2px 0;">Tuổi</th>
+                        <td>{age}</td>
+                      </tr>
+                      <tr>
+                        <th align="left" style="padding: 0 8px 2px 0;">Quốc tịch</th>
+                        <td>{national}</td>
+                      </tr>
+                      <tr>
+                        <th align="left" style="padding: 0 8px 2px 0;">Tỉnh</th>
+                        <td>{tinh}</td>
+                      </tr>
+                      <tr></tr>
+
+                      <tr>
+                        <th align="left" style="padding: 0 8px 2px 0;">Ngày Nhập Viện</th>
+                        <td>{datein}</td>
+                      </tr>
+                      <tr>
+                        <th align="left" style="padding: 0 8px 2px 0;">Ngày Xét Nghiệm</th>
+                        <td>{dateout}</td>
+                      </tr>
+                    </table>
+                  </div>
+                  <hr style="margin-top: 0.6em; margin-bottom: 0.6em;" />
+                  <div style="display: flex; justify-content: center; font-size: 12px;">
+                    {cachlay}
+                  </div>
+                `;
+            }
+          }
+          return text;
+        });
+
+        networkSeries.manyBodyStrength = -20;
+        networkSeries.links.template.strength = 0.4;
+
+        networkSeries.minRadius = am4core.percent(2);
+        networkSeries.centerStrength = 2;
+        networkSeries.links.template.strokeWidth = 2;
+        networkSeries.nodes.template.label.adapter.add(
+          "text",
+          (label, target, key) => {
+            if (target.dataItem && target.dataItem.level != 0) {
+              return "\n\n{name}";
+            } else {
+              return "[font-size: 12px]{name}[/]";
+            }
+          }
+        );
+        networkSeries.nodes.template.label.adapter.add(
+          "valign",
+          (label, target, key) => {
+            if (target.dataItem && target.dataItem.level != 0) {
+              return "bottom";
+            }
+          }
+        );
+        networkSeries.nodes.template.label.adapter.add(
+          "fill",
+          (label, target, key) => {
+            if (target.dataItem && target.dataItem.level != 0) {
+              return am4core.color("#000");
+            } else {
+              return am4core.color("#fff");
+            }
+          }
+        );
+        networkSeries.fontSize = 8;
+        networkSeries.maxRadius = 30;
+        networkSeries.minRadius = 20;
+        networkSeries.nodes.template.adapter.add("fill", function (
+          fill,
+          target
+        ) {
+          return fill.lighten(target.dataItem.level * 0.01);
+        });
+
+        var icon = networkSeries.nodes.template.createChild(am4core.Image);
+        icon.propertyFields.href = "image";
+        icon.horizontalCenter = "middle";
+        icon.verticalCenter = "middle";
+        icon.width = 20;
+        icon.height = 20;
+
+        var circleBullet = networkSeries.nodes.template.createChild(
+          am4charts.CircleBullet
+        );
+        circleBullet.dx = 17;
+        circleBullet.dy = -26;
+        circleBullet.circle.stroke = am4core.color("#fff");
+
+        circleBullet.circle.adapter.add("radius", function (fill, target) {
+          if (!target.dataItem.diem || target.dataItem.diem == 0) {
+            return 0;
+          } else {
+            return 8;
+          }
+        });
+        circleBullet.circle.adapter.add("fill", function (fill, target) {
+          if (target.dataItem.maudiem) {
+            var values = target.dataItem.maudiem;
+            return am4core.color(values);
+          }
+        });
+        var icon2 = networkSeries.nodes.template.createChild(
+          am4charts.LabelBullet
+        );
+
+        icon2.label.adapter.add("text", function (center, target) {
+          var values = target.dataItem.diem;
+          return values != "0" ? "{diem}" : "";
+        });
+        icon2.label.fill = am4core.color("#fff");
+        icon2.dx = 17;
+        icon2.dy = -26;
+        icon2.label.fontSize = 8;
+
+        function find(source, id) {
+          for (key in source) {
+            var item = source[key];
+            if (item.name == id) return item;
+
+            if (item.children) {
+              var subresult = find(item.children, id);
+              if (subresult) return subresult;
+            }
+          }
+          return null;
+        }
+
+        function addToData(source, id) {
+          for (key in source) {
+            var item = source[key];
+
+            if (item.children) {
+              var subresult = find(item.children, id[1]);
+              if (subresult)
+                if (subresult.hasOwnProperty("children")) {
+                  subresult["children"].push({ name: id[2] });
+                  return source;
+                } else {
+                  subresult["children"] = [{ name: id[2] }];
+                  return source;
+                }
+            }
+          }
+          return null;
+        }
+
+        function addInfoToData(source, id, info) {
+          for (key in source) {
+            var item = source[key];
+
+            if (item.children) {
+              var subresult = find(item.children, id);
+              if (subresult) {
+                subresult["Tuổi"] = info["Tuổi"] ? info["Tuổi"] : "";
+                subresult["Quốc Tịch"] = info["Quốc Tịch"]
+                  ? info["Quốc Tịch"]
+                  : "";
+                subresult["Tỉnh"] = info["Tỉnh"] ? info["Tỉnh"] : "";
+                subresult["Giới Tính"] = info["Giới Tính"]
+                  ? info["Giới Tính"]
+                  : "";
+                subresult["Ngày Nhập"] = info["Ngày Nhập"]
+                  ? info["Ngày Nhập"]
+                  : "";
+                subresult["Ngày Xuất"] = info["Ngày Xuất"]
+                  ? info["Ngày Xuất"]
+                  : "";
+                subresult["Cách Lây"] = info["Cách Lây"]
+                  ? info["Cách Lây"]
+                  : "";
+                subresult["Điểm"] = info["Điểm"] ? info["Điểm"] : "";
+                subresult["maudiem"] = info["maudiem"] ? info["maudiem"] : "";
+                subresult["image"] =
+                  "https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/flags/" +
+                  info["code"] +
+                  ".svg";
+                subresult["icon"] =
+                  "https://static-ncovi.vnpt.vn/ncovi/ncovi_network/v3/static/" +
+                  info["icon"];
+                return source;
+              }
+            }
+          }
+          return source;
+        }
+
+        function addDepthColor(arr, depth = 0) {
+          arr.forEach((obj) => {
+            obj.color = listColor[depth];
+            obj.level = depth;
+            if (obj.hasOwnProperty("children"))
+              addDepthColor(obj.children, depth + 1);
+          });
+        }
+
+        var listColor = [
+          "#A8B3BF",
+          "#FF5B5D",
+          "#AC64F4",
+          "#F4A764",
+          "#7FFFD4",
+          "#159957",
+          "#ff9966",
+        ];
+        var testdata =
+          "Trung Quốc--BN001,-BN001-BN002,-BN001-BN003,Trung Quốc--BN004,Trung Quốc--BN005,Trung Quốc--BN006,Trung Quốc--BN007,Trung Quốc--BN008,Trung Quốc--BN009,-BN006-BN010,-BN006-BN011,-BN006-BN012,-BN006-BN013,Trung Quốc--BN014,-BN010-BN015,-BN006-BN016,Anh--BN017,Hàn Quốc--BN018,-BN017-BN019,-BN017-BN020,Anh--BN021,Anh--BN022,Anh--BN023,Anh--BN024,Anh--BN025,Anh--BN026,Anh--BN027,Anh--BN028,Anh--BN029,Anh--BN030,Anh--BN031,Anh--BN032,Anh--BN033,Mỹ--BN034,-BN029-BN035,-BN034-BN036,-BN034-BN037,-BN034-BN038,-BN034-BN039,-BN034-BN040,-BN034-BN041,-BN034-BN042,-BN034-BN043,-BN038-BN044,-BN034-BN045,Anh--BN046,-BN017-BN047,-BN045-BN048,-BN030-BN049,Anh--BN050,Pháp--BN051,Qatar--BN052,Qatar--BN053,Tây Ban Nha--BN054,Anh--BN055,Pháp--BN056,Anh--BN057,Pháp--BN058,Anh--BN059,Pháp--BN060,Malaysia--BN061,Anh--BN062,Anh--BN063,Thụy Sĩ--BN064,-BN045-BN065,Mỹ--BN066,Malaysia--BN067,Singapore--BN068,Liên bang Nga--BN069,Anh--BN070,Anh--BN071,Pháp-BN060-BN072,Anh--BN073,Pháp--BN074,Anh--BN075,Pháp--BN076,Anh--BN077,Anh--BN078,Anh--BN079,Anh--BN080,Pháp--BN081,Anh--BN082,Thổ Nhĩ Kỳ--BN083,Anh--BN084,Anh--BN085,KXD--BN086,-BN086-BN087,Anh--BN088,Nhật Bản--BN089,Tây Ban Nha--BN090,Anh-BN097-BN091,Pháp--BN092,Hungary--BN093,Cộng hòa Séc--BN094,Pháp--BN095,Pháp--BN096,Malaysia--BN097,Malaysia-BN097-BN098,Pháp--BN099,Malaysia--BN100,Anh--BN101,Anh--BN102,Anh--BN103,Anh--BN104,Malaysia--BN105,Malaysia--BN106,-BN086-BN107,Anh--BN108,Anh--BN109,Mỹ--BN110,Anh--BN111,Pháp--BN112,Anh--BN113";
+        var dataInfo =
+          "{&#34;BN001&#34;:{&#34;Tuổi&#34;:&#34;66&#34;,&#34;Quốc Tịch&#34;:&#34;Trung Quốc&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;22/01&#34;,&#34;Ngày Xuất&#34;:&#34;23/01&#34;,&#34;code&#34;:&#34;cn&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Về từ Vũ Hán&#34;,&#34;Điểm&#34;:&#34;17,1&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN002&#34;:{&#34;Tuổi&#34;:&#34;28&#34;,&#34;Quốc Tịch&#34;:&#34;Trung Quốc&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;22/01&#34;,&#34;Ngày Xuất&#34;:&#34;23/01&#34;,&#34;code&#34;:&#34;cn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - con trai&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN003&#34;:{&#34;Tuổi&#34;:&#34;25&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Khánh Hòa&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;24/01&#34;,&#34;Ngày Xuất&#34;:&#34;26/01&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - NV lễ tân&#34;,&#34;Điểm&#34;:&#34;15,4&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN004&#34;:{&#34;Tuổi&#34;:&#34;73&#34;,&#34;Quốc Tịch&#34;:&#34;Mỹ&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;31/01&#34;,&#34;Ngày Xuất&#34;:&#34;31/01&#34;,&#34;code&#34;:&#34;us&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Về từ Vũ Hán&#34;,&#34;Điểm&#34;:&#34;22,4&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN005&#34;:{&#34;Tuổi&#34;:&#34;29&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;01/02&#34;,&#34;Ngày Xuất&#34;:&#34;02/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Về từ Vũ Hán&#34;,&#34;Điểm&#34;:&#34;23,3&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN006&#34;:{&#34;Tuổi&#34;:&#34;24&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;27/01&#34;,&#34;Ngày Xuất&#34;:&#34;03/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Về từ Vũ Hán&#34;,&#34;Điểm&#34;:&#34;18,8&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN007&#34;:{&#34;Tuổi&#34;:&#34;25&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Thanh Hóa&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;24/01&#34;,&#34;Ngày Xuất&#34;:&#34;03/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Về từ Vũ Hán&#34;,&#34;Điểm&#34;:&#34;13,7&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN008&#34;:{&#34;Tuổi&#34;:&#34;29&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;26/01&#34;,&#34;Ngày Xuất&#34;:&#34;03/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Về từ Vũ Hán&#34;,&#34;Điểm&#34;:&#34;17,1&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN009&#34;:{&#34;Tuổi&#34;:&#34;30&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;01/02&#34;,&#34;Ngày Xuất&#34;:&#34;03/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Về từ Vũ Hán&#34;,&#34;Điểm&#34;:&#34;23,3&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN010&#34;:{&#34;Tuổi&#34;:&#34;42&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;31/01&#34;,&#34;Ngày Xuất&#34;:&#34;04/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - dì&#34;,&#34;Điểm&#34;:&#34;19,7&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN011&#34;:{&#34;Tuổi&#34;:&#34;49&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;04/02&#34;,&#34;Ngày Xuất&#34;:&#34;06/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - mẹ&#34;,&#34;Điểm&#34;:&#34;23,3&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN012&#34;:{&#34;Tuổi&#34;:&#34;16&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;04/02&#34;,&#34;Ngày Xuất&#34;:&#34;06/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-2.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - em gái&#34;,&#34;Điểm&#34;:&#34;23,3&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN013&#34;:{&#34;Tuổi&#34;:&#34;55&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;05/02&#34;,&#34;Ngày Xuất&#34;:&#34;07/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-4.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - hàng xóm&#34;,&#34;Điểm&#34;:&#34;24,2&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN014&#34;:{&#34;Tuổi&#34;:&#34;29&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;03/02&#34;,&#34;Ngày Xuất&#34;:&#34;06/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Về từ Vũ Hán&#34;,&#34;Điểm&#34;:&#34;25,1&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN015&#34;:{&#34;Tuổi&#34;:&#34;0,3&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;06/02&#34;,&#34;Ngày Xuất&#34;:&#34;08/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-2.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - cháu ngoại&#34;,&#34;Điểm&#34;:&#34;22,4&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN016&#34;:{&#34;Tuổi&#34;:&#34;50&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Vĩnh Phúc&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;11/02&#34;,&#34;Ngày Xuất&#34;:&#34;12/02&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - bố&#34;,&#34;Điểm&#34;:&#34;29,6&#34;,&#34;maudiem&#34;:&#34;#ffffff&#34;},&#34;BN017&#34;:{&#34;Tuổi&#34;:&#34;27&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;05/03&#34;,&#34;Ngày Xuất&#34;:&#34;06/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;6,9&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN018&#34;:{&#34;Tuổi&#34;:&#34;27&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Ninh Bình&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;09/03&#34;,&#34;Ngày Xuất&#34;:&#34;08/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Về từ Deagu&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN019&#34;:{&#34;Tuổi&#34;:&#34;27&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;07/03&#34;,&#34;Ngày Xuất&#34;:&#34;07/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - lái xe&#34;,&#34;Điểm&#34;:&#34;4,6&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN020&#34;:{&#34;Tuổi&#34;:&#34;64&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;06/03&#34;,&#34;Ngày Xuất&#34;:&#34;07/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-4.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - bác gái&#34;,&#34;Điểm&#34;:&#34;2,3&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN021&#34;:{&#34;Tuổi&#34;:&#34;61&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;06/03&#34;,&#34;Ngày Xuất&#34;:&#34;07/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;8,6&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN022&#34;:{&#34;Tuổi&#34;:&#34;58&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Quảng Ninh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;08/03&#34;,&#34;Ngày Xuất&#34;:&#34;08/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN023&#34;:{&#34;Tuổi&#34;:&#34;74&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Quảng Ninh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;08/03&#34;,&#34;Ngày Xuất&#34;:&#34;08/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN024&#34;:{&#34;Tuổi&#34;:&#34;67&#34;,&#34;Quốc Tịch&#34;:&#34;Ireland&#34;,&#34;Tỉnh&#34;:&#34;Quảng Ninh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;08/03&#34;,&#34;Ngày Xuất&#34;:&#34;08/03&#34;,&#34;code&#34;:&#34;ie&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN025&#34;:{&#34;Tuổi&#34;:&#34;50&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Quảng Ninh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;08/03&#34;,&#34;Ngày Xuất&#34;:&#34;08/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN026&#34;:{&#34;Tuổi&#34;:&#34;69&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Lào Cai&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;08/03&#34;,&#34;Ngày Xuất&#34;:&#34;09/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN027&#34;:{&#34;Tuổi&#34;:&#34;70&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Lào Cai&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;08/03&#34;,&#34;Ngày Xuất&#34;:&#34;09/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/0-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN028&#34;:{&#34;Tuổi&#34;:&#34;60&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Đà Nẵng&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;08/03&#34;,&#34;Ngày Xuất&#34;:&#34;08/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN029&#34;:{&#34;Tuổi&#34;:&#34;66&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Đà Nẵng&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;08/03&#34;,&#34;Ngày Xuất&#34;:&#34;08/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN030&#34;:{&#34;Tuổi&#34;:&#34;66&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Thừa Thiên Huế&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;07/03&#34;,&#34;Ngày Xuất&#34;:&#34;08/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/0-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;10,3&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN031&#34;:{&#34;Tuổi&#34;:&#34;49&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Quảng Nam&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;08/03&#34;,&#34;Ngày Xuất&#34;:&#34;08/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN032&#34;:{&#34;Tuổi&#34;:&#34;24&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;09/03&#34;,&#34;Ngày Xuất&#34;:&#34;09/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Chuyên cơ&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN033&#34;:{&#34;Tuổi&#34;:&#34;58&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Quảng Nam&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;10/03&#34;,&#34;Ngày Xuất&#34;:&#34;10/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;15,4&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN034&#34;:{&#34;Tuổi&#34;:&#34;51&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bình Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;09/03&#34;,&#34;Ngày Xuất&#34;:&#34;09/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng QR 974\\/02Mar&#34;,&#34;Điểm&#34;:&#34;13,7&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN035&#34;:{&#34;Tuổi&#34;:&#34;28&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Đà Nẵng&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;11/03&#34;,&#34;Ngày Xuất&#34;:&#34;10/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - NV bán hàng&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN036&#34;:{&#34;Tuổi&#34;:&#34;37&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bình Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;11/03&#34;,&#34;Ngày Xuất&#34;:&#34;11/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - nhân viên&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN037&#34;:{&#34;Tuổi&#34;:&#34;64&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bình Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;11/03&#34;,&#34;Ngày Xuất&#34;:&#34;11/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-4.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - giúp việc&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN038&#34;:{&#34;Tuổi&#34;:&#34;27&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bình Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;10/03&#34;,&#34;Ngày Xuất&#34;:&#34;11/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - con dâu&#34;,&#34;Điểm&#34;:&#34;10,3&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN039&#34;:{&#34;Tuổi&#34;:&#34;25&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;10/03&#34;,&#34;Ngày Xuất&#34;:&#34;11/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - HDV du lịch&#34;,&#34;Điểm&#34;:&#34;10,3&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN040&#34;:{&#34;Tuổi&#34;:&#34;2&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bình Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;11/03&#34;,&#34;Ngày Xuất&#34;:&#34;11/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-2.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - cháu gái&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN041&#34;:{&#34;Tuổi&#34;:&#34;59&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bình Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;11/03&#34;,&#34;Ngày Xuất&#34;:&#34;11/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - chồng&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN042&#34;:{&#34;Tuổi&#34;:&#34;28&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bình Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;11/03&#34;,&#34;Ngày Xuất&#34;:&#34;11/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - con trai&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN043&#34;:{&#34;Tuổi&#34;:&#34;13&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bình Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;11/03&#34;,&#34;Ngày Xuất&#34;:&#34;11/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-2.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - con trai của NV&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN044&#34;:{&#34;Tuổi&#34;:&#34;47&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bình Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;11/03&#34;,&#34;Ngày Xuất&#34;:&#34;11/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - mẹ&#34;,&#34;Điểm&#34;:&#34;6,9&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN045&#34;:{&#34;Tuổi&#34;:&#34;25&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;12/03&#34;,&#34;Ngày Xuất&#34;:&#34;12/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - đối tác&#34;,&#34;Điểm&#34;:&#34;13,7&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN046&#34;:{&#34;Tuổi&#34;:&#34;30&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;11/03&#34;,&#34;Ngày Xuất&#34;:&#34;13/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054\\/02Mar&#34;,&#34;Điểm&#34;:&#34;4,6&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN047&#34;:{&#34;Tuổi&#34;:&#34;43&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;06/03&#34;,&#34;Ngày Xuất&#34;:&#34;13/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - giúp việc&#34;,&#34;Điểm&#34;:&#34;2,3&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN048&#34;:{&#34;Tuổi&#34;:&#34;31&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;13/03&#34;,&#34;Ngày Xuất&#34;:&#34;14/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - đồng nghiệp&#34;,&#34;Điểm&#34;:&#34;10,3&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN049&#34;:{&#34;Tuổi&#34;:&#34;71&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Thừa Thiên Huế&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;07/03&#34;,&#34;Ngày Xuất&#34;:&#34;14/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc - chồng&#34;,&#34;Điểm&#34;:&#34;10,3&#34;,&#34;maudiem&#34;:&#34;#4FCFB9&#34;},&#34;BN050&#34;:{&#34;Tuổi&#34;:&#34;24&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Quảng Ninh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;13/03&#34;,&#34;Ngày Xuất&#34;:&#34;13/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054&#34;,&#34;Điểm&#34;:&#34;8,6&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN051&#34;:{&#34;Tuổi&#34;:&#34;51&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;13/03&#34;,&#34;Ngày Xuất&#34;:&#34;14/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN18&#34;,&#34;Điểm&#34;:&#34;6,9&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN052&#34;:{&#34;Tuổi&#34;:&#34;22&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;13/03&#34;,&#34;Ngày Xuất&#34;:&#34;13/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng QR968&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN053&#34;:{&#34;Tuổi&#34;:&#34;53&#34;,&#34;Quốc Tịch&#34;:&#34;Cộng hòa Séc&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;13/03&#34;,&#34;Ngày Xuất&#34;:&#34;14/03&#34;,&#34;code&#34;:&#34;cz&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng QR970&#34;,&#34;Điểm&#34;:&#34;6,9&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN054&#34;:{&#34;Tuổi&#34;:&#34;33&#34;,&#34;Quốc Tịch&#34;:&#34;Latvia&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;13/03&#34;,&#34;Ngày Xuất&#34;:&#34;15/03&#34;,&#34;code&#34;:&#34;lv&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng TK162&#34;,&#34;Điểm&#34;:&#34;10,3&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN055&#34;:{&#34;Tuổi&#34;:&#34;30&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;14/03&#34;,&#34;Ngày Xuất&#34;:&#34;14/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN056&#34;:{&#34;Tuổi&#34;:&#34;35&#34;,&#34;Quốc Tịch&#34;:&#34;Đức&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;14/03&#34;,&#34;Ngày Xuất&#34;:&#34;14/03&#34;,&#34;code&#34;:&#34;de&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng&#34;,&#34;Điểm&#34;:&#34;10,3&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN057&#34;:{&#34;Tuổi&#34;:&#34;66&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Quảng Nam&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;15/03&#34;,&#34;Ngày Xuất&#34;:&#34;15/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN058&#34;:{&#34;Tuổi&#34;:&#34;26&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;15/03&#34;,&#34;Ngày Xuất&#34;:&#34;15/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN059&#34;:{&#34;Tuổi&#34;:&#34;30&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;15/03&#34;,&#34;Ngày Xuất&#34;:&#34;15/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054&#34;,&#34;Điểm&#34;:&#34;21,5&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN060&#34;:{&#34;Tuổi&#34;:&#34;29&#34;,&#34;Quốc Tịch&#34;:&#34;Pháp&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;15/03&#34;,&#34;Ngày Xuất&#34;:&#34;15/03&#34;,&#34;code&#34;:&#34;fr&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0018&#34;,&#34;Điểm&#34;:&#34;10,3&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN061&#34;:{&#34;Tuổi&#34;:&#34;42&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Ninh Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;15/03&#34;,&#34;Ngày Xuất&#34;:&#34;15/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VJ826&#34;,&#34;Điểm&#34;:&#34;19,7&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN062&#34;:{&#34;Tuổi&#34;:&#34;18&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;16/03&#34;,&#34;Ngày Xuất&#34;:&#34;16/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-2.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN063&#34;:{&#34;Tuổi&#34;:&#34;20&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;15/03&#34;,&#34;Ngày Xuất&#34;:&#34;15/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng TG564&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN064&#34;:{&#34;Tuổi&#34;:&#34;36&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;17/03&#34;,&#34;Ngày Xuất&#34;:&#34;17/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng EK392&#34;,&#34;Điểm&#34;:&#34;10,3&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN065&#34;:{&#34;Tuổi&#34;:&#34;28&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;13/03&#34;,&#34;Ngày Xuất&#34;:&#34;17/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Tiếp xúc&#34;,&#34;Điểm&#34;:&#34;10,3&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN066&#34;:{&#34;Tuổi&#34;:&#34;21&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;17/03&#34;,&#34;Ngày Xuất&#34;:&#34;17/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng BR395&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN067&#34;:{&#34;Tuổi&#34;:&#34;36&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Ninh Thuận&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;17/03&#34;,&#34;Ngày Xuất&#34;:&#34;18/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VJ826&#34;,&#34;Điểm&#34;:&#34;21,5&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN068&#34;:{&#34;Tuổi&#34;:&#34;41&#34;,&#34;Quốc Tịch&#34;:&#34;Mỹ&#34;,&#34;Tỉnh&#34;:&#34;Đà Nẵng&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;17/03&#34;,&#34;Ngày Xuất&#34;:&#34;17/03&#34;,&#34;code&#34;:&#34;us&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng MI632&#34;,&#34;Điểm&#34;:&#34;6,9&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN069&#34;:{&#34;Tuổi&#34;:&#34;30&#34;,&#34;Quốc Tịch&#34;:&#34;Đức&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;16/03&#34;,&#34;Ngày Xuất&#34;:&#34;16/03&#34;,&#34;code&#34;:&#34;de&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng SU290&#34;,&#34;Điểm&#34;:&#34;6,9&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN070&#34;:{&#34;Tuổi&#34;:&#34;19&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;18/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-2.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng TK164&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN071&#34;:{&#34;Tuổi&#34;:&#34;19&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;18/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-2.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng TK164&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN072&#34;:{&#34;Tuổi&#34;:&#34;25&#34;,&#34;Quốc Tịch&#34;:&#34;Pháp&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;17/03&#34;,&#34;Ngày Xuất&#34;:&#34;17/03&#34;,&#34;code&#34;:&#34;fr&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0018&#34;,&#34;Điểm&#34;:&#34;13,7&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN073&#34;:{&#34;Tuổi&#34;:&#34;11&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hải Dương&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;17/03&#34;,&#34;Ngày Xuất&#34;:&#34;17/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-2.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054&#34;,&#34;Điểm&#34;:&#34;15,4&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN074&#34;:{&#34;Tuổi&#34;:&#34;23&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;16/03&#34;,&#34;Ngày Xuất&#34;:&#34;17/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0018&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN075&#34;:{&#34;Tuổi&#34;:&#34;40&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;17/03&#34;,&#34;Ngày Xuất&#34;:&#34;17/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN50&#34;,&#34;Điểm&#34;:&#34;4,6&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN076&#34;:{&#34;Tuổi&#34;:&#34;52&#34;,&#34;Quốc Tịch&#34;:&#34;Pháp&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;16/03&#34;,&#34;Ngày Xuất&#34;:&#34;16/03&#34;,&#34;code&#34;:&#34;fr&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng TK162, VJ642&#34;,&#34;Điểm&#34;:&#34;12&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN077&#34;:{&#34;Tuổi&#34;:&#34;25&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bắc Ninh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;18/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng QR028, QR976&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN078&#34;:{&#34;Tuổi&#34;:&#34;20&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;17/03&#34;,&#34;Ngày Xuất&#34;:&#34;18/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng EK394&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN079&#34;:{&#34;Tuổi&#34;:&#34;48&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bạc Liêu&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;17/03&#34;,&#34;Ngày Xuất&#34;:&#34;17/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng EK4\\/EK392&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN080&#34;:{&#34;Tuổi&#34;:&#34;18&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bạc Liêu&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;18/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-2.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng EK4\\/EK392&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN081&#34;:{&#34;Tuổi&#34;:&#34;20&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;19/03&#34;,&#34;Ngày Xuất&#34;:&#34;19/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng AF258&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN082&#34;:{&#34;Tuổi&#34;:&#34;16&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;19/03&#34;,&#34;Ngày Xuất&#34;:&#34;19/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-2.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng EK30, EK364&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN083&#34;:{&#34;Tuổi&#34;:&#34;50&#34;,&#34;Quốc Tịch&#34;:&#34;Mỹ&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;19/03&#34;,&#34;Ngày Xuất&#34;:&#34;19/03&#34;,&#34;code&#34;:&#34;us&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng TK162&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN084&#34;:{&#34;Tuổi&#34;:&#34;21&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;18/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN085&#34;:{&#34;Tuổi&#34;:&#34;20&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;19/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN086&#34;:{&#34;Tuổi&#34;:&#34;54&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;16/03&#34;,&#34;Ngày Xuất&#34;:&#34;16/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-4.png&#34;,&#34;Cách Lây&#34;:&#34;&#34;,&#34;Điểm&#34;:&#34;99&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN087&#34;:{&#34;Tuổi&#34;:&#34;33&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;19/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;KXĐ&#34;,&#34;Điểm&#34;:&#34;99&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN088&#34;:{&#34;Tuổi&#34;:&#34;25&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;18/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN0054&#34;,&#34;Điểm&#34;:&#34;15,4&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN089&#34;:{&#34;Tuổi&#34;:&#34;22&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;19/03&#34;,&#34;Ngày Xuất&#34;:&#34;19/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng NH831&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN090&#34;:{&#34;Tuổi&#34;:&#34;21&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;19/03&#34;,&#34;Ngày Xuất&#34;:&#34;19/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng EK 392&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN091&#34;:{&#34;Tuổi&#34;:&#34;43&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;19/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;KXĐ&#34;,&#34;Điểm&#34;:&#34;99&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN092&#34;:{&#34;Tuổi&#34;:&#34;21&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;19/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng QR970&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN093&#34;:{&#34;Tuổi&#34;:&#34;20&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;20/03&#34;,&#34;Ngày Xuất&#34;:&#34;20/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng SU290&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN094&#34;:{&#34;Tuổi&#34;:&#34;64&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Bắc Giang&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;20/03&#34;,&#34;Ngày Xuất&#34;:&#34;20/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng SU290&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN095&#34;:{&#34;Tuổi&#34;:&#34;20&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;21/03&#34;,&#34;Ngày Xuất&#34;:&#34;21/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng AF258&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN096&#34;:{&#34;Tuổi&#34;:&#34;21&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;20/03&#34;,&#34;Ngày Xuất&#34;:&#34;20/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng EK392&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN097&#34;:{&#34;Tuổi&#34;:&#34;34&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;20/03&#34;,&#34;Ngày Xuất&#34;:&#34;21/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng AK1502&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN098&#34;:{&#34;Tuổi&#34;:&#34;34&#34;,&#34;Quốc Tịch&#34;:&#34;Anh&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;21/03&#34;,&#34;Ngày Xuất&#34;:&#34;21/03&#34;,&#34;code&#34;:&#34;gb&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng AK1502&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN099&#34;:{&#34;Tuổi&#34;:&#34;29&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;21/03&#34;,&#34;Ngày Xuất&#34;:&#34;21/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng AF258&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN100&#34;:{&#34;Tuổi&#34;:&#34;55&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hồ Chí Minh&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;22/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-4.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng AK524&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#357CBF&#34;},&#34;BN101&#34;:{&#34;Tuổi&#34;:&#34;26&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Đồng Tháp&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;22/03&#34;,&#34;Ngày Xuất&#34;:&#34;22/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN50&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN102&#34;:{&#34;Tuổi&#34;:&#34;9&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Đồng Tháp&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;22/03&#34;,&#34;Ngày Xuất&#34;:&#34;22/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-2.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN50&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN103&#34;:{&#34;Tuổi&#34;:&#34;22&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Đồng Tháp&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;22/03&#34;,&#34;Ngày Xuất&#34;:&#34;22/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN50&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN104&#34;:{&#34;Tuổi&#34;:&#34;33&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Đồng Tháp&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;22/03&#34;,&#34;Ngày Xuất&#34;:&#34;22/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN50&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN105&#34;:{&#34;Tuổi&#34;:&#34;35&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Trà Vinh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;22/03&#34;,&#34;Ngày Xuất&#34;:&#34;22/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng AK575&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN106&#34;:{&#34;Tuổi&#34;:&#34;20&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Trà Vinh&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;22/03&#34;,&#34;Ngày Xuất&#34;:&#34;22/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng AK575&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN107&#34;:{&#34;Tuổi&#34;:&#34;25&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;21/03&#34;,&#34;Ngày Xuất&#34;:&#34;21/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN108&#34;:{&#34;Tuổi&#34;:&#34;19&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;21/03&#34;,&#34;Ngày Xuất&#34;:&#34;21/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-2.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN54&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN109&#34;:{&#34;Tuổi&#34;:&#34;42&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nam&#34;,&#34;Ngày Nhập&#34;:&#34;20/03&#34;,&#34;Ngày Xuất&#34;:&#34;20/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/1-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng TG560&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN110&#34;:{&#34;Tuổi&#34;:&#34;19&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;20/03&#34;,&#34;Ngày Xuất&#34;:&#34;20/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-2.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng JL571&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN111&#34;:{&#34;Tuổi&#34;:&#34;25&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;22/03&#34;,&#34;Ngày Xuất&#34;:&#34;22/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN54&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;},&#34;BN112&#34;:{&#34;Tuổi&#34;:&#34;30&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;18/03&#34;,&#34;Ngày Xuất&#34;:&#34;22/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-3.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN18&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#687466&#34;},&#34;BN113&#34;:{&#34;Tuổi&#34;:&#34;18&#34;,&#34;Quốc Tịch&#34;:&#34;Việt Nam&#34;,&#34;Tỉnh&#34;:&#34;Hà Nội&#34;,&#34;Giới Tính&#34;:&#34;Nữ&#34;,&#34;Ngày Nhập&#34;:&#34;20/03&#34;,&#34;Ngày Xuất&#34;:&#34;20/03&#34;,&#34;code&#34;:&#34;vn&#34;,&#34;icon&#34;:&#34;images/0-2.png&#34;,&#34;Cách Lây&#34;:&#34;Cùng VN54&#34;,&#34;Điểm&#34;:&#34;0&#34;,&#34;maudiem&#34;:&#34;#084177&#34;}}";
+        dataInfo = JSON.parse(dataInfo.replace(/&#34;/g, '"'));
+        testdata = testdata.split(",");
+        var convertToIndex =
+          "Trung Quốc,Anh,Hàn Quốc,Mỹ,Pháp,Cộng hòa Séc,Tây Ban Nha,Malaysia,Thụy Sĩ,Singapore,Liên bang Nga,Thổ Nhĩ Kỳ,KXD,Nhật Bản,Hungary";
+        var dataNetwork = [];
+        convertToIndex = convertToIndex.split(",");
+        convertToIndex.forEach((item) => {
+          var obj = new Object();
+          obj["name"] = item;
+          obj["value"] = "10";
+          obj["children"] = [];
+          dataNetwork.push(obj);
+        });
+
+        testdata.forEach((e) => {
+          let item = e.split("-");
+          if (item[0] != "" && find(dataNetwork, item[0])) {
+            dataNetwork[convertToIndex.indexOf(item[0])]["children"].push({
+              name: item[2],
+            });
+          } else if (item[1] != "") {
+            if (find(dataNetwork, item[1])) {
+              dataNetwork = addToData(dataNetwork, item);
+            }
+          }
+        });
+        for (var key in dataInfo) {
+          if (dataInfo.hasOwnProperty(key)) {
+            dataNetwork = addInfoToData(dataNetwork, key, dataInfo[key]);
+          }
+        }
+        addDepthColor(dataNetwork);
+        console.log(dataNetwork);
+        networkSeries.data = dataNetwork;
+      }
+
+      genNetworkChart();
+    </script>
+  </body>
+</html>
