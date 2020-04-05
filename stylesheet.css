@@ -61,6 +61,10 @@ body {
   bottom: 16px;
 }
 
+.mobile #app {
+  bottom: 32px
+}
+
 #chartNetwork {
   width: 100%;
   height: 100%;
