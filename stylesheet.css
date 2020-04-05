@@ -72,44 +72,42 @@ body {
   color: #fff;
 }
 .badge.badge-nguon {
-  background-color: #a8b3bf
+  background-color: #a8b3bf;
 }
 .text-nguon {
-  color: #a8b3bf
+  color: #a8b3bf;
 }
 .badge.badge-f0 {
-  background-color: #ff5b5d
+  background-color: #ff5b5d;
 }
 .text-f0 {
-  color: #ff5b5d
+  color: #ff5b5d;
 }
 .badge.badge-f1 {
-  background-color: #ac64f4
+  background-color: #ac64f4;
 }
 .text-f1 {
-  color: #ac64f4
+  color: #ac64f4;
 }
 .badge.badge-f2 {
-  background-color: #f4a764
+  background-color: #f4a764;
 }
 .text-f2 {
-  color: #f4a764
+  color: #f4a764;
 }
 .badge.badge-thap {
-  background-color: #4fcfb9
+  background-color: #4fcfb9;
 }
 .badge.badge-trungbinh {
-  background-color: #357cbf
+  background-color: #357cbf;
 }
 .badge.badge-cao {
-  background-color: #3a547b
+  background-color: #3a547b;
 }
 
-@media (max-width: 992px) {
-  #notice h5 {
-    font-size: 3rem
-  }
-  #notice .text-small {
-    font-size: 2rem
-  }
+.mobile #notice h5 {
+  font-size: 3rem;
+}
+.mobile #notice .text-small {
+  font-size: 2rem;
 }
