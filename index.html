@@ -35,6 +35,16 @@
     <link rel="stylesheet" href="stylesheet.css" />
   </head>
   <body>
+    <script>
+      (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/messenger.Extensions.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'Messenger'));
+    </script>
+
     <div id="app" class="d-flex flex-column">
       <div class="card border w-100 h-100 mb-4">
         <div id="chartNetwork"></div>
